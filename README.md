@@ -14,7 +14,8 @@ Run The docker image, with the following options:
 
 The Docker "/apps/sandboxes" folder is shared to the local host machine "/apps/sandboxes" folder
 Forward all ports exposed by docker (8080 for Tomcat, 3000 for BrowserSync from the "grunt serve" task, 3001 for the BrowserSync UI, and 22 for SSHD). In the following example we forward the container 22 port to the host 4022 port, to prevent some port conflicts:
-sudo docker run -v /apps/sandboxes:/apps/sandboxes -p 8080:8080 -p 3000:3000 -p 3001:3001 -p 4022:22 -t dieple/devops
+
+sudo docker run --detach -v /apps/sandboxes:/apps/sandboxes -p 8080:8080 -p 3000:3000 -p 3001:3001 -p 4022:22 -t dieple/devops
 
 SSH configuration:
 ===================
@@ -77,5 +78,5 @@ As the generated files are in your shared folder, they will not be deleted if yo
 ====================================
 Run the cassandra DB image
 ====================================
-docker run --detach --name cassandra dieple/apidocker-cassandra
+docker run --detach dieple/apidocker-cassandra
 
