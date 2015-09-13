@@ -80,3 +80,13 @@ Run the cassandra DB image
 ====================================
 docker run --detach dieple/apidocker-cassandra
 
+
+Connect another cql terminal
+====================================
+
+Connect to the second container, and check if it can see your data:
+
+Start up cqlsh:
+
+CONTAINER_NAME=`docker ps | grep "dieple/apidocker-cassandra" | awk '{print $NF}'`
+docker run -it --rm --net container:$CONTAINER_NAME dieple/apidocker-cassandra cqlsh
