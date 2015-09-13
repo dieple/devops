@@ -1,0 +1,141 @@
+#################################
+# Docker file for the personal  #
+# E2E application.		#
+# This will take a while to run #
+# go grab a cup of coffee!	#
+#################################
+#
+# DOCKER-VERSION 1.0.0
+#
+
+FROM      ubuntu:14.04
+MAINTAINER Diep Le <dieple1@gmail.com>
+
+#################################
+# Start  Apps install		#
+#################################
+
+# make sure the package repository is up to date
+RUN echo "deb http://archive.ubuntu.com/ubuntu trusty main universe" > /etc/apt/sources.list
+RUN apt-get -y update
+
+# install python-software-properties (so you can do add-apt-repository)
+RUN DEBIAN_FRONTEND=noninteractive apt-get install -y -q python-software-properties software-properties-common
+
+# install SSH server so we can connect multiple times to the container
+RUN apt-get -y install openssh-server && mkdir /var/run/sshd
+
+# install oracle java from PPA
+RUN add-apt-repository ppa:webupd8team/java -y
+RUN apt-get update
+RUN echo oracle-java8-installer shared/accepted-oracle-license-v1-1 select true | /usr/bin/debconf-set-selections
+RUN apt-get -y install oracle-java8-installer && apt-get clean
+
+# Set oracle java as the default java
+RUN update-java-alternatives -s java-8-oracle
+RUN echo "export JAVA_HOME=/usr/lib/jvm/java-8-oracle" >> ~/.bashrc
+
+# install utilities
+RUN apt-get -y install vim git sudo zip bzip2 fontconfig curl
+
+# install maven
+RUN apt-get -y install maven
+
+# install node.js from PPA
+RUN add-apt-repository ppa:chris-lea/node.js
+RUN apt-get update
+RUN apt-get -y install nodejs
+
+# install yeoman
+RUN npm install -g yo
+
+# install JHipster
+RUN npm install -g generator-jhipster@2.7.0
+
+# configure the "osdba" and "root" users
+RUN echo 'root:osdba' |chpasswd
+RUN groupadd osdba && useradd osdba -s /bin/bash -m -g osdba -G osdba && adduser osdba sudo
+RUN echo 'osdba:osdba' |chpasswd
+
+# install the sample app to download all Maven dependencies
+RUN cd /home/osdba && \
+    wget https://github.com/jhipster/jhipster-sample-app/archive/v2.7.0.zip && \
+    unzip v2.7.0.zip && \
+    rm v2.7.0.zip
+RUN cd /home/osdba/jhipster-sample-app-2.7.0 && npm install
+RUN cd /home && chown -R osdba:osdba /home/osdba
+RUN cd /home/osdba/jhipster-sample-app-2.7.0 && sudo -u osdba mvn dependency:go-offline
+
+##
+# install rabbitmq
+##
+RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys F7B8CEA6056E8E56 && \
+    echo "deb http://www.rabbitmq.com/debian/ testing main" >> /etc/apt/sources.list && \
+    apt-get update && \
+    apt-get install -y rabbitmq-server pwgen && \
+    rabbitmq-plugins enable rabbitmq_management && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN echo "ERLANGCOOKIE" > /var/lib/rabbitmq/.erlang.cookie
+RUN chown rabbitmq:rabbitmq /var/lib/rabbitmq/.erlang.cookie
+RUN chmod 400 /var/lib/rabbitmq/.erlang.cookie
+
+# Install Mysql packages
+ENV DEBIAN_FRONTEND noninteractive
+RUN apt-get update && \
+  apt-get -yq install mysql-server-5.6 pwgen && \
+  rm -rf /var/lib/apt/lists/*
+
+# Remove pre-installed database
+RUN rm -rf /var/lib/mysql/*
+
+# Remove syslog configuration
+RUN rm /etc/mysql/conf.d/mysqld_safe_syslog.cnf
+
+# Add Rabbitmq scripts
+ADD rabbitmq/start_rabbitmq.sh /start_rabbitmq.sh
+ADD rabbitmq/set_rabbitmq_password.sh /set_rabbitmq_password.sh
+
+# Add MySQL scripts
+ADD mysql/mysql_import.sh /mysql_import.sh
+ADD mysql/run_mysql.sh /run_mysql.sh
+
+# Add MySQL configuration
+ADD mysql/my.cnf /etc/mysql/conf.d/my.cnf
+ADD mysql/mysqld_charset.cnf /etc/mysql/conf.d/mysqld_charset.cnf
+
+RUN chmod 755 ./*.sh
+
+
+# Tomcat, Grunt server, ssh port
+EXPOSE 8080 9000 22
+
+# rabbitmq ports
+EXPOSE 5672 15672
+
+# mysql port
+EXPOSE 3306
+
+# Exposed ENV
+ENV MYSQL_USER e2eadmin
+ENV MYSQL_PASS **Random**
+
+# Replication ENV
+ENV REPLICATION_MASTER **False**
+ENV REPLICATION_SLAVE **False**
+ENV REPLICATION_USER replica
+ENV REPLICATION_PASS replica
+
+# Add working directory and VOLUMEs to allow backup of config and databases
+VOLUME ["/apps/docker/e2e", "/etc/mysql", "/var/lib/mysql"]
+
+CMD ["/start_rabbitmq.sh", "/usr/sbin/sshd -D", "/run_mysql.sh"]
+
+#######
+# End #
+#######
+
+
+
+
