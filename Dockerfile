@@ -63,3 +63,9 @@ VOLUME ["/apps/sandboxes"]
 EXPOSE 8080 3000 3001 22
 CMD    /usr/sbin/sshd -D
 
+# Copy the new entrypoint script into place.
+COPY entrypoint.sh /docker-entrypoint.sh
+
+# Set the entrypoint script.
+ENTRYPOINT ["/docker-entrypoint.sh"]
+# Set the default command
