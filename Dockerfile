@@ -1,6 +1,6 @@
 # My ubuntu devops development docker container
 
-# DOCKER-VERSION 0.0.1
+# DOCKER-VERSION 0.0.2
 FROM      ubuntu:14.04
 
 MAINTAINER Diep Le <dieple1@gmail.com>
