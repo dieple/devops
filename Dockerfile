@@ -28,17 +28,17 @@ RUN echo "export JAVA_HOME=/usr/lib/jvm/java-8-oracle" >> ~/.bashrc
 # install utilities
 RUN apt-get -y install vim git sudo zip bzip2 fontconfig curl byobu htop man wget  && apt-get clean
 
-# install awscli
-RUN apt-get install -yq --no-install-recommends awscli groff-base && apt-get clean
-
 # install python
 #RUN apt-get install -y python python-dev python-pip python-virtualenv
+
+# install awscli
+#RUN apt-get install -yq --no-install-recommends awscli groff-base && apt-get clean
 
 # install maven
 RUN apt-get -y install maven  && apt-get clean
 
 # install node.js
-RUN curl -sL https://deb.nodesource.com/setup_0.12 | sudo bash -
+RUN curl -sL https://deb.nodesource.com/setup_5.x | sudo -E bash -
 RUN apt-get install -y nodejs  && apt-get clean
 
 # install yeoman & Jhipster
@@ -59,7 +59,7 @@ RUN cd /home && chown -R devops:devops /home/devops
 RUN cd /home/devops/jhipster-sample-app-2.20.0 && sudo -u devops mvn dependency:go-offline
 
 # expose the working directory, the Tomcat port, the BrowserSync ports, the SSHD port, and run SSHD
-VOLUME ["/apps/sandboxes"]
+VOLUME ["$HOME/sandboxes"]
 EXPOSE 8080 3000 3001 22
 CMD    /usr/sbin/sshd -D
 
